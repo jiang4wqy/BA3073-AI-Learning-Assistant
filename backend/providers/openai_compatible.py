@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 from openai import APIConnectionError, APITimeoutError, AuthenticationError, OpenAI
@@ -64,6 +65,12 @@ class OpenAICompatibleTextProvider:
                 ],
                 max_tokens=request.max_output_tokens,
                 temperature=request.temperature,
+                # Reserve the fixed artifact output budget for the final source.
+                extra_body=(
+                    {"thinking": {"type": "disabled"}}
+                    if urlparse(profile["base_url"]).hostname == "api.deepseek.com"
+                    else None
+                ),
             )
         except AuthenticationError as exc:
             raise ModelProviderError(
